@@ -1,0 +1,386 @@
+/* ========================================
+   CSS Variables - 微拟物设计系统
+   ======================================== */
+
+:root {
+    /* Primary Colors */
+    --primary: #06b6d4; /* cyan-500 */
+    --primary-foreground: #ffffff;
+
+    /* Secondary Colors */
+    --secondary: #1e293b; /* slate-800 */
+    --secondary-foreground: #e2e8f0;
+
+    /* Accent Colors */
+    --accent: #8b5cf6; /* violet-500 */
+    --accent-foreground: #ffffff;
+
+    /* Destructive Colors */
+    --destructive: #ef4444; /* red-500 */
+    --destructive-foreground: #ffffff;
+
+    /* Background & Surface */
+    --background: #020617; /* slate-950 */
+    --surface: #0f172a; /* slate-900 */
+    --surface-elevated: #1e293b; /* slate-800 */
+
+    /* Text Colors */
+    --foreground: #e2e8f0; /* slate-200 */
+    --muted: #64748b; /* slate-500 */
+
+    /* Border */
+    --border: #334155; /* slate-700 */
+    --border-light: #475569; /* slate-600 */
+
+    /* Tier Colors */
+    --tier-quantum: #34d399; /* emerald-400 */
+    --tier-neighboring: #22d3ee; /* cyan-400 */
+    --tier-mirror: #60a5fa; /* blue-400 */
+    --tier-imaginary: #a78bfa; /* purple-400 */
+    --tier-singularity: #d946ef; /* fuchsia-500 */
+
+    /* Radius - Sharp edges for sci-fi aesthetic */
+    --radius-sm: 0px;
+    --radius-default: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+}
+
+/* ========================================
+   微拟物基础样式类
+   ======================================== */
+
+/* 凸起效果 - 用于按钮、卡片等 */
+.neu-raised {
+    background: linear-gradient(
+        135deg,
+        var(--primary) 0%,
+        color-mix(in srgb, var(--primary) 85%, black) 50%,
+        color-mix(in srgb, var(--primary) 70%, black) 100%
+    );
+    box-shadow:
+        0 4px 12px color-mix(in srgb, var(--primary) 35%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-default);
+    transition: all 0.2s ease;
+}
+
+.neu-raised:hover {
+    transform: scale(1.02);
+    box-shadow:
+        0 6px 20px color-mix(in srgb, var(--primary) 45%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+
+.neu-raised:active {
+    transform: scale(0.97);
+}
+
+/* 内凹效果 - 用于输入框、容器等 */
+.neu-inset {
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--surface) 90%, black) 0%,
+        var(--surface) 50%,
+        color-mix(in srgb, var(--surface) 95%, white) 100%
+    );
+    box-shadow:
+        inset 0 2px 8px rgba(0, 0, 0, 0.4),
+        inset 0 1px 2px rgba(0, 0, 0, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-default);
+}
+
+/* 卡片凸起效果 */
+.neu-card {
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--surface) 110%, white) 0%,
+        var(--surface) 50%,
+        color-mix(in srgb, var(--surface) 90%, black) 100%
+    );
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-lg);
+    transition: all 0.3s ease;
+}
+
+.neu-card:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.5),
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* 徽章渐变效果 */
+.neu-badge {
+    background: linear-gradient(
+        135deg,
+        var(--accent) 0%,
+        color-mix(in srgb, var(--accent) 80%, black) 100%
+    );
+    box-shadow:
+        0 2px 6px color-mix(in srgb, var(--accent) 40%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 4px 12px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* 主按钮样式 */
+.neu-button-primary {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 30%, #e2e8f0 100%);
+    box-shadow:
+        0 4px 16px rgba(255, 255, 255, 0.2),
+        0 2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-default);
+    color: #0f172a;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.neu-button-primary:hover {
+    transform: scale(1.02);
+    box-shadow:
+        0 6px 24px rgba(255, 255, 255, 0.25),
+        0 4px 8px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+}
+
+.neu-button-primary:active {
+    transform: scale(0.97);
+}
+
+/* 次级按钮/幽灵按钮 */
+.neu-button-ghost {
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--surface-elevated) 80%, transparent) 0%,
+        color-mix(in srgb, var(--surface-elevated) 60%, transparent) 100%
+    );
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-default);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.neu-button-ghost:hover {
+    transform: scale(1.02);
+    background: linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--surface-elevated) 100%, transparent) 0%,
+        color-mix(in srgb, var(--surface-elevated) 80%, transparent) 100%
+    );
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-color: var(--border-light);
+}
+
+.neu-button-ghost:active {
+    transform: scale(0.97);
+}
+
+/* Tier 选择器按钮 */
+.neu-tier-button {
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--surface) 105%, white) 0%,
+        var(--surface) 50%,
+        color-mix(in srgb, var(--surface) 85%, black) 100%
+    );
+    box-shadow:
+        0 4px 16px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-default);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.neu-tier-button:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.neu-tier-button.selected {
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--surface-elevated) 110%, white) 0%,
+        var(--surface-elevated) 50%,
+        color-mix(in srgb, var(--surface-elevated) 80%, black) 100%
+    );
+    box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.2),
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 输入框内凹效果 */
+.neu-input {
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--background) 100%, black) 0%,
+        var(--background) 100%
+    );
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.5),
+        inset 0 1px 2px rgba(0, 0, 0, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+    transition: all 0.2s ease;
+}
+
+.neu-input:focus {
+    box-shadow:
+        inset 0 2px 6px rgba(0, 0, 0, 0.5),
+        inset 0 1px 2px rgba(0, 0, 0, 0.3),
+        0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+}
+
+/* 复选框样式 */
+.neu-checkbox {
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--background) 90%, black) 0%,
+        var(--background) 100%
+    );
+    box-shadow:
+        inset 0 2px 4px rgba(0, 0, 0, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.03);
+    border-radius: 0;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.neu-checkbox.checked {
+    background: linear-gradient(
+        135deg,
+        var(--primary) 0%,
+        color-mix(in srgb, var(--primary) 70%, black) 100%
+    );
+    box-shadow:
+        0 2px 6px color-mix(in srgb, var(--primary) 40%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: var(--primary);
+}
+
+/* 状态徽章 */
+.neu-status-stable {
+    background: linear-gradient(
+        135deg,
+        var(--tier-quantum) 0%,
+        color-mix(in srgb, var(--tier-quantum) 70%, black) 100%
+    );
+    box-shadow:
+        0 2px 8px color-mix(in srgb, var(--tier-quantum) 40%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.neu-status-unstable {
+    background: linear-gradient(
+        135deg,
+        var(--destructive) 0%,
+        color-mix(in srgb, var(--destructive) 70%, black) 100%
+    );
+    box-shadow:
+        0 2px 8px color-mix(in srgb, var(--destructive) 40%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* 装饰性角落 - 升级版 */
+.neu-corner {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    opacity: 0.6;
+}
+
+.neu-corner::before,
+.neu-corner::after {
+    content: "";
+    position: absolute;
+    background: linear-gradient(
+        135deg,
+        var(--primary) 0%,
+        color-mix(in srgb, var(--primary) 60%, transparent) 100%
+    );
+}
+
+.neu-corner.top-left::before {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+}
+
+.neu-corner.top-left::after {
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+}
+
+.neu-corner.top-right::before {
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 2px;
+}
+
+.neu-corner.top-right::after {
+    top: 0;
+    right: 0;
+    width: 2px;
+    height: 100%;
+}
+
+.neu-corner.bottom-left::before {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+}
+
+.neu-corner.bottom-left::after {
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+}
+
+.neu-corner.bottom-right::before {
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 2px;
+}
+
+.neu-corner.bottom-right::after {
+    bottom: 0;
+    right: 0;
+    width: 2px;
+    height: 100%;
+}
