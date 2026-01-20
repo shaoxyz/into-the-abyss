@@ -1,6 +1,12 @@
 name = "into-the-abyss"
 main = "worker/index.ts"
 compatibility_date = "2024-01-01"
+workers_dev = true
+
+# Custom domain
+routes = [
+  { pattern = "abyss.momomolo.ai", custom_domain = true }
+]
 
 [assets]
 directory = "dist"
