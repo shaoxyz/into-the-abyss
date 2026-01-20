@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:cf": "wrangler pages dev --compatibility-date=2024-01-01 -- vite",
+    "dev:worker": "npm run build && wrangler dev",
     "build": "vite build",
-    "preview": "wrangler pages dev dist",
-    "deploy": "wrangler pages deploy dist"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@google/genai": "^1.37.0",

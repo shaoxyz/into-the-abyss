@@ -1,0 +1,12 @@
+name = "into-the-abyss"
+main = "worker/index.ts"
+compatibility_date = "2024-01-01"
+
+[assets]
+directory = "dist"
+
+[vars]
+# Non-secret environment variables can go here
+
+# Secret variables (like GEMINI_API_KEY) should be set via:
+# wrangler secret put GEMINI_API_KEY

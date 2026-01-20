@@ -2,6 +2,7 @@ import { GoogleGenAI, Type, Schema } from "@google/genai";
 
 interface Env {
   GEMINI_API_KEY: string;
+  ASSETS: Fetcher;
 }
 
 interface RequestBody {
@@ -30,15 +31,23 @@ FORBIDDEN WORDS:
 "Focus", "Productivity", "Work", "Task", "Cheer up".
 `;
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+async function handleGeminiRequest(request: Request, env: Env): Promise<Response> {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
 
   try {
-    const apiKey = context.env.GEMINI_API_KEY;
+    const apiKey = env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return new Response(
@@ -47,7 +56,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       );
     }
 
-    const body = await context.request.json() as RequestBody;
+    const body = await request.json() as RequestBody;
     const { duration, taskContext, tier } = body;
 
     const ai = new GoogleGenAI({ apiKey });
@@ -123,14 +132,18 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
-};
+}
 
-export const onRequestOptions: PagesFunction = async () => {
-  return new Response(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Handle API routes
+    if (url.pathname === "/api/gemini") {
+      return handleGeminiRequest(request, env);
+    }
+
+    // For all other routes, serve static assets
+    return env.ASSETS.fetch(request);
+  },
 };
