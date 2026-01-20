@@ -480,24 +480,24 @@ const AppContent: React.FC = () => {
       <SpaceMusic active={appState === AppState.FOCUSING} muted={isMuted} onAnalyserReady={setAnalyser} />
 
       {/* Controls - depth 0.3 for subtle movement */}
-      <ParallaxLayer depth={0.3} className="absolute top-4 right-4 z-50 flex gap-2">
+      <ParallaxLayer depth={0.3} className="absolute top-4 right-4 z-50 flex gap-3">
         <button
           onClick={() => setIsMuted(!isMuted)}
-          className="font-mono text-[10px] md:text-xs uppercase tracking-widest px-3 py-2 transition-all duration-200"
-          style={{
-            ...ghostButtonStyle,
-            color: "var(--muted)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.color = "white";
-            e.currentTarget.style.borderColor = "var(--border-light)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.color = "var(--muted)";
-            e.currentTarget.style.borderColor = "var(--border)";
-          }}
+          className="p-1 transition-colors duration-200 text-[var(--muted)] hover:text-white"
+          title={isMuted ? t('button.unmute') : t('button.mute')}
         >
-          [{isMuted ? t('button.unmute') : t('button.mute')}]
+          {isMuted ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <line x1="23" y1="9" x2="17" y2="15"/>
+              <line x1="17" y1="9" x2="23" y2="15"/>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+          )}
         </button>
         <LanguageSwitcher />
       </ParallaxLayer>
@@ -512,9 +512,6 @@ const AppContent: React.FC = () => {
           }
         />
       </div>
-
-      {/* Overlay Vignette */}
-      <div className="absolute inset-0 pointer-events-none z-0" style={{ background: 'radial-gradient(circle at center, transparent 0%, #020617 70%)' }}></div>
 
       {/* Main Content Router */}
       <main className="relative z-10">

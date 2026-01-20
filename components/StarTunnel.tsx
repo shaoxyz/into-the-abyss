@@ -61,8 +61,8 @@ const StarTunnel: React.FC<StarTunnelProps> = ({
 
       for (let i = 0; i < numStars; i++) {
         starsRef.current.push({
-          x: (Math.random() - 0.5) * width * 3,
-          y: (Math.random() - 0.5) * height * 3,
+          x: Math.random() * width - centerX,
+          y: Math.random() * height - centerY,
           z: Math.random() * width,
           o: Math.random(),
         });
@@ -82,7 +82,7 @@ const StarTunnel: React.FC<StarTunnelProps> = ({
       ctx.fillRect(0, 0, width, height);
 
       const colors = getColors(currentStage);
-      const speedFactor = currentCollapsed ? 0.3 : currentSpeed * 25 + 1;
+      const speedFactor = currentCollapsed ? 0.1 : currentSpeed * 15 + 0.5;
 
       const centerX = width / 2;
       const centerY = height / 2;
@@ -103,51 +103,23 @@ const StarTunnel: React.FC<StarTunnelProps> = ({
         const k = focalLength / star.z;
         const x = star.x * k + centerX;
         const y = star.y * k + centerY;
-        const size = (1 - star.z / width) * 7;
+        const size = (1 - star.z / width) * 4;
 
         if (x >= 0 && x <= width && y >= 0 && y <= height) {
           const shade = colors[Math.floor(star.o * colors.length)];
-          const baseAlpha = currentCollapsed
-            ? 0.3
-            : Math.min(1, 1 - star.z / width + 0.5);
-          const radius = size / 2;
-
-          // Outer glow (光晕)
-          if (!currentCollapsed && size > 1.5) {
-            const glowRadius = radius * 3;
-            const glow = ctx.createRadialGradient(x, y, 0, x, y, glowRadius);
-            glow.addColorStop(0, shade);
-            glow.addColorStop(0.3, shade + "90");
-            glow.addColorStop(1, shade + "00");
-            ctx.globalAlpha = baseAlpha * 0.8;
-            ctx.beginPath();
-            ctx.fillStyle = glow;
-            ctx.arc(x, y, glowRadius, 0, Math.PI * 2);
-            ctx.fill();
-          }
-
-          // Main star body
-          ctx.globalAlpha = baseAlpha;
           ctx.beginPath();
           ctx.fillStyle = shade;
-          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          ctx.globalAlpha = currentCollapsed
+            ? 0.2
+            : Math.min(1, 1 - star.z / width + 0.2);
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
           ctx.fill();
-
-          // Core highlight (高光)
-          if (!currentCollapsed && size > 1) {
-            ctx.globalAlpha = baseAlpha * 1.2;
-            ctx.beginPath();
-            ctx.fillStyle = "#ffffff";
-            ctx.arc(x, y, radius * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-          }
 
           // Add "streak" effect if moving fast
           if (currentSpeed > 0.5 && !currentCollapsed) {
-            ctx.globalAlpha = baseAlpha * 0.8;
             ctx.beginPath();
             ctx.strokeStyle = shade;
-            ctx.lineWidth = size / 1.5;
+            ctx.lineWidth = size / 2;
             ctx.moveTo(x, y);
             // Simple trail calculation based on perspective
             const trailK = focalLength / (star.z + speedFactor * 5);
@@ -183,7 +155,7 @@ const StarTunnel: React.FC<StarTunnelProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full z-0 pointer-events-none"
+      className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"
     />
   );
 };

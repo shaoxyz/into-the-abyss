@@ -1,91 +1,32 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { ObservationReport, FocusTier } from "../types";
-
-const SYSTEM_PROMPT = `
-You are OBS-99, a Parallel Universe Observer executing a cross-dimensional signal capture mission.
-Your output must be a JSON object.
-
-TONE GUIDELINES:
-1. Absolutely cold, objective, and de-personalized.
-2. NO emotional support, NO "Good job", NO "Keep going".
-3. Use hard sci-fi terminology (entropy, quantum fluctuation, redshift, manifold).
-4. Describe the "dimension" the user just spent time in based on the duration.
-
-DURATION CONTEXT:
-- Micro (1m): A glitch in the matrix. Brief, confusing, unstable imagery. Flicker of alternate reality.
-- Short (25m): Subtle changes from reality.
-- Medium (60m): Noticeable biological or architectural differences.
-- Long (120m+): Abstract, non-Euclidean, metaphysical concepts.
-
-FORBIDDEN WORDS:
-"Focus", "Productivity", "Work", "Task", "Cheer up".
-`;
 
 export const generateObservationReport = async (
   duration: number,
   taskContext: string,
   tier: FocusTier,
 ): Promise<Omit<ObservationReport, "id" | "timestamp">> => {
-  if (!process.env.API_KEY) {
-    console.warn("API Key missing, returning mock data");
-    return getMockReport(duration);
-  }
-
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-    const schema: Schema = {
-      type: Type.OBJECT,
-      properties: {
-        dimensionCode: {
-          type: Type.STRING,
-          description: "A random dimension ID like PX-772 or A-99",
-        },
-        environment: {
-          type: Type.STRING,
-          description:
-            "A visual description of the surroundings in this dimension.",
-        },
-        log: {
-          type: Type.STRING,
-          description:
-            "The core observation log. Metaphorical connection to the user's task context if provided.",
-        },
-        entropy: {
-          type: Type.NUMBER,
-          description: "A number between 0 and 1 representing chaos level.",
-        },
-        stability: {
-          type: Type.STRING,
-          enum: ["Stable", "Unstable", "Critical", "Collapsed"],
-        },
+    const response = await fetch("/api/gemini", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      required: ["dimensionCode", "environment", "log", "entropy", "stability"],
-    };
-
-    const prompt = `
-    Generate an observation report.
-    Duration: ${duration} minutes.
-    Tier: ${tier} (${tier === 200 ? "Singularity" : tier === 120 ? "Imaginary" : tier === 1 ? "Quantum Flicker" : "Standard"}).
-    User Context (The task they were doing): "${taskContext || "Unknown signal source"}".
-
-    If the context is provided, subtly weave it into the environment description as a physical object or phenomenon, but do not mention it directly as a task.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
-      contents: prompt,
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
-        responseMimeType: "application/json",
-        responseSchema: schema,
-      },
+      body: JSON.stringify({
+        duration,
+        taskContext,
+        tier,
+      }),
     });
 
-    const text = response.text;
-    if (!text) throw new Error("No response from AI");
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
 
-    const data = JSON.parse(text);
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error);
+    }
 
     return {
       duration,

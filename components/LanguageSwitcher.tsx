@@ -1,19 +1,5 @@
 import React from 'react';
-import { useI18n, Language } from '../contexts/I18nContext';
-
-const ghostButtonStyle = {
-  background: `linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--surface-elevated) 60%, transparent) 0%,
-    color-mix(in srgb, var(--surface-elevated) 40%, transparent) 100%
-  )`,
-  boxShadow: `
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05)
-  `,
-  borderRadius: 'var(--radius-sm)',
-  border: '1px solid var(--border)',
-};
+import { useI18n } from '../contexts/I18nContext';
 
 const LanguageSwitcher: React.FC = () => {
   const { language, setLanguage } = useI18n();
@@ -25,21 +11,14 @@ const LanguageSwitcher: React.FC = () => {
   return (
     <button
       onClick={toggleLanguage}
-      className="font-mono text-[10px] md:text-xs uppercase tracking-widest px-3 py-2 transition-all duration-200"
-      style={{
-        ...ghostButtonStyle,
-        color: 'var(--muted)',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.color = 'white';
-        e.currentTarget.style.borderColor = 'var(--border-light)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.color = 'var(--muted)';
-        e.currentTarget.style.borderColor = 'var(--border)';
-      }}
+      className="p-1 transition-colors duration-200 text-[var(--muted)] hover:text-white"
+      title={language === 'en' ? '切换到中文' : 'Switch to English'}
     >
-      [{language === 'en' ? '中文' : 'EN'}]
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
     </button>
   );
 };
