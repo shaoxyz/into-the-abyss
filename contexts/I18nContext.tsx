@@ -15,6 +15,8 @@ const translations: Record<Language, Record<string, string>> = {
   en: {
     // App title
     'app.title': 'Into the Abyss',
+    'app.title.prefix': 'Into the',
+    'app.title.accent': 'Abyss',
     'app.subtitle': 'Temporal Observation Interface // OBS-99',
 
     // Tier names and descriptions
@@ -51,6 +53,7 @@ const translations: Record<Language, Record<string, string>> = {
     'terminal.title': '// Order_Management_Terminal',
     'terminal.placeholder': 'Input directive...',
     'terminal.empty': 'No active directives.',
+    'terminal.record': 'REC',
 
     // Archive
     'archive.title': 'Deep Storage',
@@ -72,6 +75,8 @@ const translations: Record<Language, Record<string, string>> = {
   zh: {
     // App title
     'app.title': '凝视深渊',
+    'app.title.prefix': '凝视',
+    'app.title.accent': '深渊',
     'app.subtitle': '时间观测接口 // OBS-99',
 
     // Tier names and descriptions
@@ -108,6 +113,7 @@ const translations: Record<Language, Record<string, string>> = {
     'terminal.title': '// 指令管理终端',
     'terminal.placeholder': '输入指令...',
     'terminal.empty': '暂无活动指令。',
+    'terminal.record': '记录',
 
     // Archive
     'archive.title': '深层存储',

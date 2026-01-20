@@ -3,6 +3,10 @@
    ======================================== */
 
 :root {
+    /* Parallax Motion Variables (updated by JS at 60fps) */
+    --parallax-x: 0;
+    --parallax-y: 0;
+
     /* Primary Colors */
     --primary: #06b6d4; /* cyan-500 */
     --primary-foreground: #ffffff;

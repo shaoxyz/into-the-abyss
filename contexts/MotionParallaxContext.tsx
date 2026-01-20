@@ -2,17 +2,9 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import {
   useMotionParallax,
   UseMotionParallaxReturn,
-  MotionOffset,
-  getParallaxStyle,
-  getParallaxDisplacement,
 } from '../hooks/useMotionParallax';
 
-interface MotionParallaxContextValue extends UseMotionParallaxReturn {
-  getStyle: (depth?: number, maxDisplacement?: number) => React.CSSProperties;
-  getDisplacement: (depth?: number, maxDisplacement?: number) => { x: number; y: number };
-}
-
-const MotionParallaxContext = createContext<MotionParallaxContextValue | null>(null);
+const MotionParallaxContext = createContext<UseMotionParallaxReturn | null>(null);
 
 interface MotionParallaxProviderProps {
   children: ReactNode;
@@ -25,28 +17,14 @@ export function MotionParallaxProvider({
 }: MotionParallaxProviderProps) {
   const motion = useMotionParallax({ enabled });
 
-  const getStyle = (depth: number = 1, maxDisplacement: number = 15) => {
-    return getParallaxStyle(motion.offset, depth, maxDisplacement);
-  };
-
-  const getDisplacement = (depth: number = 1, maxDisplacement: number = 15) => {
-    return getParallaxDisplacement(motion.offset, depth, maxDisplacement);
-  };
-
-  const value: MotionParallaxContextValue = {
-    ...motion,
-    getStyle,
-    getDisplacement,
-  };
-
   return (
-    <MotionParallaxContext.Provider value={value}>
+    <MotionParallaxContext.Provider value={motion}>
       {children}
     </MotionParallaxContext.Provider>
   );
 }
 
-export function useMotionParallaxContext(): MotionParallaxContextValue {
+export function useMotionParallaxContext(): UseMotionParallaxReturn {
   const context = useContext(MotionParallaxContext);
   if (!context) {
     throw new Error(
@@ -57,7 +35,8 @@ export function useMotionParallaxContext(): MotionParallaxContextValue {
 }
 
 /**
- * Parallax wrapper component for easy use
+ * GPU-accelerated Parallax wrapper component
+ * Uses CSS Custom Properties for 60fps animation without React re-renders
  */
 interface ParallaxLayerProps {
   children: ReactNode;
@@ -71,13 +50,23 @@ interface ParallaxLayerProps {
 export function ParallaxLayer({
   children,
   depth = 1,
-  maxDisplacement = 15,
+  maxDisplacement = 20,
   className,
   style,
   as: Component = 'div',
 }: ParallaxLayerProps) {
-  const { getStyle } = useMotionParallaxContext();
-  const parallaxStyle = getStyle(depth, maxDisplacement);
+  // CSS calc() with CSS Custom Properties = GPU-accelerated, no re-renders
+  const parallaxStyle: React.CSSProperties = {
+    transform: `translate3d(
+      calc(var(--parallax-x, 0) * ${maxDisplacement * depth}px),
+      calc(var(--parallax-y, 0) * ${maxDisplacement * depth}px),
+      0
+    )`,
+    willChange: 'transform',
+    backfaceVisibility: 'hidden',
+    // @ts-ignore - vendor prefix for Safari
+    WebkitBackfaceVisibility: 'hidden',
+  };
 
   return (
     <Component
@@ -85,7 +74,6 @@ export function ParallaxLayer({
       style={{
         ...style,
         ...parallaxStyle,
-        willChange: 'transform',
       }}
     >
       {children}

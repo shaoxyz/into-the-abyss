@@ -11,8 +11,8 @@ const Terminal: React.FC<TerminalProps> = ({ tasks, setTasks }) => {
   const [input, setInput] = useState("");
   const { t } = useI18n();
 
-  const addTask = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && input.trim()) {
+  const submitTask = () => {
+    if (input.trim()) {
       const newTask: Task = {
         id: Date.now().toString(),
         text: input.trim(),
@@ -21,6 +21,12 @@ const Terminal: React.FC<TerminalProps> = ({ tasks, setTasks }) => {
       };
       setTasks((prev) => [newTask, ...prev]);
       setInput("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      submitTask();
     }
   };
 
@@ -74,36 +80,56 @@ const Terminal: React.FC<TerminalProps> = ({ tasks, setTasks }) => {
       </h2>
 
       {/* Input Area - Inset Effect */}
-      <div
-        className="flex items-center gap-2 mb-4 md:mb-6"
-        style={{
-          background: `linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--background) 100%, black) 0%,
-            var(--background) 100%
-          )`,
-          boxShadow: `
-            inset 0 2px 6px rgba(0, 0, 0, 0.5),
-            inset 0 1px 2px rgba(0, 0, 0, 0.3),
-            0 1px 0 rgba(255, 255, 255, 0.03)
-          `,
-          borderRadius: "var(--radius-sm)",
-          border:
-            "1px solid color-mix(in srgb, var(--border) 50%, transparent)",
-          padding: "12px 16px",
-        }}
-      >
-        <span style={{ color: "var(--primary)", fontSize: "18px" }}>›</span>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={addTask}
-          placeholder={t('terminal.placeholder')}
-          className="bg-transparent border-none outline-none w-full font-mono text-base md:text-sm"
-          style={{ color: "var(--foreground)" }}
-          autoFocus
-        />
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <div
+          className="flex items-center gap-2 flex-1"
+          style={{
+            background: `linear-gradient(
+              180deg,
+              color-mix(in srgb, var(--background) 100%, black) 0%,
+              var(--background) 100%
+            )`,
+            boxShadow: `
+              inset 0 2px 6px rgba(0, 0, 0, 0.5),
+              inset 0 1px 2px rgba(0, 0, 0, 0.3),
+              0 1px 0 rgba(255, 255, 255, 0.03)
+            `,
+            borderRadius: "var(--radius-sm)",
+            border:
+              "1px solid color-mix(in srgb, var(--border) 50%, transparent)",
+            padding: "12px 16px",
+          }}
+        >
+          <span style={{ color: "var(--primary)", fontSize: "18px" }}>›</span>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t('terminal.placeholder')}
+            className="bg-transparent border-none outline-none w-full font-mono text-base md:text-sm"
+            style={{ color: "var(--foreground)" }}
+          />
+        </div>
+        {/* Record Button */}
+        <button
+          onClick={submitTask}
+          disabled={!input.trim()}
+          className="flex-shrink-0 font-mono text-xs uppercase tracking-wider px-3 py-3 transition-all duration-200"
+          style={{
+            background: input.trim()
+              ? `linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, black) 100%)`
+              : `linear-gradient(180deg, color-mix(in srgb, var(--surface) 90%, black) 0%, var(--surface) 100%)`,
+            boxShadow: input.trim()
+              ? `0 2px 8px color-mix(in srgb, var(--primary) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.2)`
+              : `inset 0 2px 4px rgba(0, 0, 0, 0.3)`,
+            border: input.trim() ? "1px solid var(--primary)" : "1px solid var(--border)",
+            color: input.trim() ? "white" : "var(--muted)",
+            opacity: input.trim() ? 1 : 0.5,
+          }}
+        >
+          {t('terminal.record')}
+        </button>
       </div>
 
       <ul className="space-y-3 max-h-[200px] md:max-h-[300px] overflow-y-auto no-scrollbar">

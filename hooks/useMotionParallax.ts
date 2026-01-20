@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 export interface MotionOffset {
   x: number;  // -1 to 1
@@ -15,18 +15,23 @@ export interface UseMotionParallaxOptions {
 }
 
 export interface UseMotionParallaxReturn {
-  offset: MotionOffset;
   isGyroscopeSupported: boolean;
   isGyroscopePermissionGranted: boolean;
   requestGyroscopePermission: () => Promise<boolean>;
+  /** Get current displacement for canvas-based components that can't use CSS variables */
+  getDisplacement: (depth: number, maxDisplacement: number) => { x: number; y: number };
 }
 
 const DEFAULT_OPTIONS: Required<UseMotionParallaxOptions> = {
-  followSpeed: 0.08,
-  centerAttraction: 0.995,
+  followSpeed: 0.1,
+  centerAttraction: 0.998,
   enabled: true,
 };
 
+/**
+ * High-performance parallax hook using CSS Custom Properties
+ * Updates CSS variables directly, bypassing React render cycle for 60fps animation
+ */
 export function useMotionParallax(
   options: UseMotionParallaxOptions = {}
 ): UseMotionParallaxReturn {
@@ -35,11 +40,20 @@ export function useMotionParallax(
     ...options,
   };
 
-  const [offset, setOffset] = useState<MotionOffset>({ x: 0, y: 0 });
+  // Check if we're on a mobile device (has touch AND small screen)
+  const isMobile = typeof window !== 'undefined' &&
+    window.matchMedia('(max-width: 768px)').matches &&
+    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+  // On mobile, disable parallax entirely
+  // On desktop, always use mouse (gyroscope API exists but doesn't work without hardware)
+  const effectivelyEnabled = enabled && !isMobile;
+  const useMouseInput = effectivelyEnabled && !isMobile;
+
   const [isGyroscopeSupported, setIsGyroscopeSupported] = useState(false);
   const [isGyroscopePermissionGranted, setIsGyroscopePermissionGranted] = useState(false);
 
-  // Refs for animation loop
+  // Refs for animation loop (no React state = no re-renders)
   const targetOffset = useRef<MotionOffset>({ x: 0, y: 0 });
   const currentOffset = useRef<MotionOffset>({ x: 0, y: 0 });
   const animationFrameRef = useRef<number>(0);
@@ -49,12 +63,10 @@ export function useMotionParallax(
     const hasGyroscope = 'DeviceOrientationEvent' in window;
     setIsGyroscopeSupported(hasGyroscope);
 
-    // Check if permission is needed (iOS 13+)
     if (
       hasGyroscope &&
       typeof (DeviceOrientationEvent as any).requestPermission !== 'function'
     ) {
-      // Android or older iOS - no permission needed
       setIsGyroscopePermissionGranted(true);
     }
   }, []);
@@ -72,36 +84,43 @@ export function useMotionParallax(
         return false;
       }
     }
-    // No permission needed
     setIsGyroscopePermissionGranted(true);
     return true;
   }, []);
 
+  // Get displacement for canvas-based components (reads from current refs)
+  const getDisplacement = useCallback((depth: number = 1, maxDisplacement: number = 20) => {
+    const current = currentOffset.current;
+    return {
+      x: current.x * maxDisplacement * depth,
+      y: current.y * maxDisplacement * depth,
+    };
+  }, []);
+
   // Handle device orientation (gyroscope)
   useEffect(() => {
-    if (!enabled || !isGyroscopeSupported || !isGyroscopePermissionGranted) return;
+    if (!effectivelyEnabled || !isGyroscopeSupported || !isGyroscopePermissionGranted) return;
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       const { beta, gamma } = event;
       if (beta === null || gamma === null) return;
 
-      // Map ±30 degrees to -1 ~ 1
       const maxAngle = 30;
       const x = Math.max(-1, Math.min(1, gamma / maxAngle));
-      const y = Math.max(-1, Math.min(1, (beta - 45) / maxAngle)); // 45° is "neutral" holding position
+      const y = Math.max(-1, Math.min(1, (beta - 45) / maxAngle));
 
       targetOffset.current = { x, y };
     };
 
     window.addEventListener('deviceorientation', handleOrientation);
     return () => window.removeEventListener('deviceorientation', handleOrientation);
-  }, [enabled, isGyroscopeSupported, isGyroscopePermissionGranted]);
+  }, [effectivelyEnabled, isGyroscopeSupported, isGyroscopePermissionGranted]);
 
-  // Handle mouse movement (desktop fallback)
+  // Handle mouse movement (desktop only)
   useEffect(() => {
-    if (!enabled) return;
-    // Only use mouse if gyroscope is not available or not permitted
-    if (isGyroscopeSupported && isGyroscopePermissionGranted) return;
+    if (!useMouseInput) return;
+
+    console.log('Parallax: Mouse input enabled');
 
     const handleMouseMove = (event: MouseEvent) => {
       const { clientX, clientY } = event;
@@ -115,23 +134,24 @@ export function useMotionParallax(
     };
 
     const handleMouseLeave = () => {
-      // When mouse leaves window, target returns to center
       targetOffset.current = { x: 0, y: 0 };
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     document.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [enabled, isGyroscopeSupported, isGyroscopePermissionGranted]);
+  }, [useMouseInput]);
 
-  // Animation loop with damping
+  // GPU-accelerated animation loop using CSS Custom Properties
   useEffect(() => {
-    if (!enabled) {
-      setOffset({ x: 0, y: 0 });
+    if (!effectivelyEnabled) {
+      // Reset CSS variables when disabled
+      document.documentElement.style.setProperty('--parallax-x', '0');
+      document.documentElement.style.setProperty('--parallax-y', '0');
       return;
     }
 
@@ -139,22 +159,18 @@ export function useMotionParallax(
       const current = currentOffset.current;
       const target = targetOffset.current;
 
-      // Follow target with damping
+      // Smooth interpolation with easing
       current.x += (target.x - current.x) * followSpeed;
       current.y += (target.y - current.y) * followSpeed;
 
-      // Apply center attraction (progressive decay)
+      // Apply center attraction
       current.x *= centerAttraction;
       current.y *= centerAttraction;
 
-      // Update state (only if changed significantly to avoid excessive re-renders)
-      const threshold = 0.001;
-      if (
-        Math.abs(current.x - offset.x) > threshold ||
-        Math.abs(current.y - offset.y) > threshold
-      ) {
-        setOffset({ x: current.x, y: current.y });
-      }
+      // Update CSS Custom Properties directly (no React re-render!)
+      // This is GPU-accelerated and runs at 60fps
+      document.documentElement.style.setProperty('--parallax-x', current.x.toFixed(4));
+      document.documentElement.style.setProperty('--parallax-y', current.y.toFixed(4));
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };
@@ -164,45 +180,12 @@ export function useMotionParallax(
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [enabled, followSpeed, centerAttraction, offset.x, offset.y]);
+  }, [effectivelyEnabled, followSpeed, centerAttraction]);
 
   return {
-    offset,
     isGyroscopeSupported,
     isGyroscopePermissionGranted,
     requestGyroscopePermission,
-  };
-}
-
-/**
- * Calculate pixel displacement for parallax effect
- * @param offset - Motion offset from useMotionParallax
- * @param depth - Parallax depth (higher = more movement). Recommended: 0.5-2
- * @param maxDisplacement - Maximum displacement in pixels. Default: 15
- */
-export function getParallaxStyle(
-  offset: MotionOffset,
-  depth: number = 1,
-  maxDisplacement: number = 15
-): React.CSSProperties {
-  const x = offset.x * maxDisplacement * depth;
-  const y = offset.y * maxDisplacement * depth;
-
-  return {
-    transform: `translate3d(${x}px, ${y}px, 0)`,
-  };
-}
-
-/**
- * Get displacement values without style object
- */
-export function getParallaxDisplacement(
-  offset: MotionOffset,
-  depth: number = 1,
-  maxDisplacement: number = 15
-): { x: number; y: number } {
-  return {
-    x: offset.x * maxDisplacement * depth,
-    y: offset.y * maxDisplacement * depth,
+    getDisplacement,
   };
 }

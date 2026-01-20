@@ -13,7 +13,16 @@
         background-color: #020617; /* Slate 950 */
         color: #e2e8f0; /* Slate 200 */
         font-family: 'Space Mono', monospace;
-        overflow: hidden;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      /* Hide scrollbar on body */
+      body::-webkit-scrollbar {
+        display: none;
+      }
+      body {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
       .font-serif-literary {
         font-family: 'Crimson Text', serif;

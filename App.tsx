@@ -1,17 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  AppState,
-  FocusTier,
-  ObservationReport,
-  Task,
-} from "./types";
+import { AppState, FocusTier, ObservationReport, Task } from "./types";
 import StarTunnel from "./components/StarTunnel";
 import Terminal from "./components/Terminal";
 import ReportCard from "./components/ReportCard";
 import ArchiveView from "./components/ArchiveView";
 import AudioAmbience from "./components/AudioAmbience";
 import SpaceMusic from "./components/SpaceMusic";
-import WaveformHUD from "./components/WaveformHUD";
+import AbyssPulse from "./components/AbyssPulse";
 import LanguageSwitcher from "./components/LanguageSwitcher";
 import { generateObservationReport } from "./services/geminiService";
 import {
@@ -129,14 +124,13 @@ const AppContent: React.FC = () => {
 
   // Get parallax context for UI elements
   const {
-    getStyle,
     isGyroscopeSupported,
     isGyroscopePermissionGranted,
     requestGyroscopePermission,
   } = useMotionParallaxContext();
 
   // Get i18n context
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const TIER_CONFIG = useTierConfig();
 
   // Load data on mount
@@ -189,19 +183,22 @@ const AppContent: React.FC = () => {
         const activeTask = tasks.find((t) => !t.completed)?.text || "";
         console.log("Initiating Sequence: Connecting to Gemini...");
 
-        generateObservationReport(totalDuration, activeTask, selectedTier).then(
-          (data) => {
-            const report: ObservationReport = {
-              ...data,
-              id: crypto.randomUUID(),
-              timestamp: Date.now(),
-            };
-            setCurrentReport(report);
-          },
-        );
+        generateObservationReport(
+          totalDuration,
+          activeTask,
+          selectedTier,
+          language,
+        ).then((data) => {
+          const report: ObservationReport = {
+            ...data,
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+          };
+          setCurrentReport(report);
+        });
       }
     }
-  }, [timeLeft, totalDuration, appState, tasks, selectedTier]);
+  }, [timeLeft, totalDuration, appState, tasks, selectedTier, language]);
 
   const startFocus = () => {
     const durationMins = selectedTier;
@@ -220,17 +217,20 @@ const AppContent: React.FC = () => {
     } else {
       setAppState(AppState.PROCESSING);
       const activeTask = tasks.find((t) => !t.completed)?.text || "";
-      generateObservationReport(totalDuration, activeTask, selectedTier).then(
-        (data) => {
-          const report: ObservationReport = {
-            ...data,
-            id: crypto.randomUUID(),
-            timestamp: Date.now(),
-          };
-          setCurrentReport(report);
-          setAppState(AppState.REPORT);
-        },
-      );
+      generateObservationReport(
+        totalDuration,
+        activeTask,
+        selectedTier,
+        language,
+      ).then((data) => {
+        const report: ObservationReport = {
+          ...data,
+          id: crypto.randomUUID(),
+          timestamp: Date.now(),
+        };
+        setCurrentReport(report);
+        setAppState(AppState.REPORT);
+      });
     }
   };
 
@@ -280,11 +280,29 @@ const AppContent: React.FC = () => {
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4 gap-6 md:gap-12 animate-in fade-in duration-700 py-16 md:py-4">
       {/* Header - depth 0.5 for subtle movement */}
       <ParallaxLayer depth={0.5} className="text-center space-y-2 md:space-y-4">
-        <h1 className="font-display text-3xl md:text-6xl text-white tracking-widest uppercase drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-          {t('app.title')}
+        <h1 className="font-display text-3xl md:text-6xl text-white tracking-widest uppercase flex items-center justify-center gap-2 md:gap-4">
+          <span className="drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+            {t("app.title.prefix")}
+          </span>
+          <span
+            className="relative px-3 md:px-5 py-1 md:py-2"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(6, 182, 212, 0.15) 100%)",
+              boxShadow: `
+                inset 0 0 20px rgba(6, 182, 212, 0.3),
+                0 0 30px rgba(6, 182, 212, 0.15)
+              `,
+              border: "1px solid rgba(6, 182, 212, 0.3)",
+            }}
+          >
+            <span className="relative z-10 drop-shadow-[0_0_15px_rgba(6,182,212,0.8)]">
+              {t("app.title.accent")}
+            </span>
+          </span>
         </h1>
         <p className="text-slate-400 font-mono text-[10px] md:text-sm tracking-[0.2em] uppercase">
-          {t('app.subtitle')}
+          {t("app.subtitle")}
         </p>
       </ParallaxLayer>
 
@@ -323,7 +341,7 @@ const AppContent: React.FC = () => {
                   >
                     {tier}
                     <span className="text-[10px] md:text-xs ml-1 align-top opacity-50">
-                      {t('unit.min')}
+                      {t("unit.min")}
                     </span>
                   </div>
                   <div
@@ -345,10 +363,16 @@ const AppContent: React.FC = () => {
 
       {/* Terminal and CTA - different depths for parallax layering */}
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 w-full max-w-4xl items-start">
-        <ParallaxLayer depth={0.6} className="flex-1 w-full flex justify-center order-2 md:order-1">
+        <ParallaxLayer
+          depth={0.6}
+          className="flex-1 w-full flex justify-center order-2 md:order-1"
+        >
           <Terminal tasks={tasks} setTasks={setTasks} />
         </ParallaxLayer>
-        <ParallaxLayer depth={1.0} className="flex-1 w-full flex flex-col items-center justify-center gap-4 md:gap-6 pt-4 md:pt-10 order-1 md:order-2">
+        <ParallaxLayer
+          depth={1.0}
+          className="flex-1 w-full flex flex-col items-center justify-center gap-4 md:gap-6 pt-4 md:pt-10 order-1 md:order-2"
+        >
           {/* iOS Gyroscope Permission Button */}
           {needsGyroscopePermission && (
             <button
@@ -360,7 +384,7 @@ const AppContent: React.FC = () => {
                 borderColor: "var(--primary)",
               }}
             >
-              {t('button.enableMotion')}
+              {t("button.enableMotion")}
             </button>
           )}
           {/* Primary CTA Button */}
@@ -373,7 +397,7 @@ const AppContent: React.FC = () => {
               isStartHovered ? primaryButtonHoverStyle : primaryButtonStyle
             }
           >
-            <span className="relative z-10">{t('button.initialize')}</span>
+            <span className="relative z-10">{t("button.initialize")}</span>
             <div
               className="absolute inset-0 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500 -z-0"
               style={{
@@ -386,7 +410,7 @@ const AppContent: React.FC = () => {
             className="text-[10px] md:text-xs font-mono"
             style={{ color: "var(--muted)" }}
           >
-            {t('status.ready')}
+            {t("status.ready")}
           </div>
         </ParallaxLayer>
       </div>
@@ -400,7 +424,7 @@ const AppContent: React.FC = () => {
             onMouseEnter={(e) => (e.currentTarget.style.color = "white")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted)")}
           >
-            {t('button.accessArchives')} ({archive.length})
+            {t("button.accessArchives")} ({archive.length})
           </button>
         </ParallaxLayer>
       )}
@@ -410,26 +434,32 @@ const AppContent: React.FC = () => {
   // 2. Focusing View
   const renderFocusing = () => (
     <div className="relative z-10 w-full h-screen flex flex-col items-center justify-center text-white">
-      {/* Waveform HUD - Behind timer, has its own parallax in the component */}
-      <WaveformHUD analyser={analyser} active={appState === AppState.FOCUSING} />
+      {/* Abyss Pulse - Living, breathing entity with audio + interaction */}
+      <AbyssPulse analyser={analyser} active={appState === AppState.FOCUSING} />
 
       {/* Live Signal indicator - depth 0.3 */}
-      <ParallaxLayer depth={0.3} className="absolute top-8 left-0 w-full flex justify-center">
+      <ParallaxLayer
+        depth={0.3}
+        className="absolute top-8 left-0 w-full flex justify-center"
+      >
         <span
           className="animate-pulse font-mono text-xs uppercase tracking-[0.3em]"
           style={{ color: "var(--destructive)" }}
         >
-          {t('status.liveSignal')}
+          {t("status.liveSignal")}
         </span>
       </ParallaxLayer>
 
       {/* Timer - depth 1.2 for prominent movement */}
-      <ParallaxLayer depth={1.2} className="text-center space-y-2 mix-blend-difference">
+      <ParallaxLayer
+        depth={1.2}
+        className="text-center space-y-2 mix-blend-difference"
+      >
         <div
           className="font-mono text-xs md:text-sm tracking-widest mb-4"
           style={{ color: "var(--muted)" }}
         >
-          {t('status.timeDilation')}
+          {t("status.timeDilation")}
         </div>
 
         <div className="font-display text-5xl md:text-6xl opacity-80 tracking-widest">
@@ -451,7 +481,7 @@ const AppContent: React.FC = () => {
           }
           onMouseLeave={(e) => (e.currentTarget.style.color = "var(--border)")}
         >
-          {t('button.abort')}
+          {t("button.abort")}
         </button>
       </ParallaxLayer>
     </div>
@@ -464,46 +494,73 @@ const AppContent: React.FC = () => {
       <div className="scanline"></div>
       <div className="crt-flicker text-center px-4">
         <h1 className="font-mono text-4xl md:text-6xl text-slate-800 font-bold mb-4 tracking-tighter glitch">
-          {t('status.signalLost')}
+          {t("status.signalLost")}
         </h1>
         <p className="font-mono text-xs md:text-base text-red-900 uppercase tracking-widest">
-          {t('status.signalLostDesc')}
+          {t("status.signalLostDesc")}
         </p>
       </div>
     </div>
   );
 
   return (
-    <div className="relative min-h-screen w-full bg-slate-950 overflow-hidden selection:bg-cyan-500/30">
+    <div className="relative min-h-screen w-full bg-slate-950 overflow-x-hidden selection:bg-cyan-500/30">
       {/* Audio Engine */}
       <AudioAmbience active={appState === AppState.FOCUSING} muted={isMuted} />
-      <SpaceMusic active={appState === AppState.FOCUSING} muted={isMuted} onAnalyserReady={setAnalyser} />
+      <SpaceMusic
+        active={appState === AppState.FOCUSING}
+        muted={isMuted}
+        onAnalyserReady={setAnalyser}
+      />
 
       {/* Controls - depth 0.3 for subtle movement */}
-      <ParallaxLayer depth={0.3} className="absolute top-4 right-4 z-50 flex gap-3">
+      <ParallaxLayer
+        depth={0.3}
+        className="absolute top-4 right-4 z-50 flex gap-3"
+      >
         <button
           onClick={() => setIsMuted(!isMuted)}
           className="p-1 transition-colors duration-200 text-[var(--muted)] hover:text-white"
-          title={isMuted ? t('button.unmute') : t('button.mute')}
+          title={isMuted ? t("button.unmute") : t("button.mute")}
         >
           {isMuted ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-              <line x1="23" y1="9" x2="17" y2="15"/>
-              <line x1="17" y1="9" x2="23" y2="15"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <line x1="23" y1="9" x2="17" y2="15" />
+              <line x1="17" y1="9" x2="23" y2="15" />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
             </svg>
           )}
         </button>
         <LanguageSwitcher />
       </ParallaxLayer>
 
-      {/* Background Visuals - slight parallax via style */}
-      <div className="fixed inset-0 w-full h-full" style={getStyle(0.2, 10)}>
+      {/* Background Visuals - no parallax on fixed background */}
+      <div className="fixed inset-0 w-full h-full">
         <StarTunnel
           speed={getSpeed()}
           colorStage={getColorStage()}
@@ -519,12 +576,15 @@ const AppContent: React.FC = () => {
         {appState === AppState.FOCUSING && renderFocusing()}
         {appState === AppState.SIGNAL_LOST && renderSignalLost()}
         {appState === AppState.PROCESSING && (
-          <ParallaxLayer depth={0.8} className="h-screen flex items-center justify-center">
+          <ParallaxLayer
+            depth={0.8}
+            className="h-screen flex items-center justify-center"
+          >
             <div
               className="font-mono animate-pulse text-sm md:text-base"
               style={{ color: "var(--primary)" }}
             >
-              {t('status.decrypting')}
+              {t("status.decrypting")}
             </div>
           </ParallaxLayer>
         )}

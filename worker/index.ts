@@ -9,9 +9,10 @@ interface RequestBody {
   duration: number;
   taskContext: string;
   tier: number;
+  language?: 'en' | 'zh';
 }
 
-const SYSTEM_PROMPT = `
+const SYSTEM_PROMPT_EN = `
 You are OBS-99, a Parallel Universe Observer executing a cross-dimensional signal capture mission.
 Your output must be a JSON object.
 
@@ -29,6 +30,26 @@ DURATION CONTEXT:
 
 FORBIDDEN WORDS:
 "Focus", "Productivity", "Work", "Task", "Cheer up".
+`;
+
+const SYSTEM_PROMPT_ZH = `
+你是 OBS-99，一名执行跨维度信号捕获任务的平行宇宙观察者。
+你的输出必须是 JSON 对象。
+
+语气指南：
+1. 绝对冷静、客观、去人格化。
+2. 禁止情感支持，禁止"加油"、"做得好"、"继续努力"。
+3. 使用硬科幻术语（熵、量子涨落、红移、流形）。
+4. 根据持续时间描述用户刚刚度过时间的"维度"。
+
+持续时间语境：
+- 微观 (1分钟)：矩阵中的故障。短暂、混乱、不稳定的图像。平行现实的闪烁。
+- 短期 (25分钟)：与现实的细微差异。
+- 中期 (60分钟)：明显的生物或建筑差异。
+- 长期 (120分钟+)：抽象的、非欧几里得的、形而上学的概念。
+
+禁用词汇：
+"专注"、"生产力"、"工作"、"任务"、"加油"。
 `;
 
 const corsHeaders = {
@@ -57,9 +78,10 @@ async function handleGeminiRequest(request: Request, env: Env): Promise<Response
     }
 
     const body = await request.json() as RequestBody;
-    const { duration, taskContext, tier } = body;
+    const { duration, taskContext, tier, language = 'en' } = body;
 
     const ai = new GoogleGenAI({ apiKey });
+    const systemPrompt = language === 'zh' ? SYSTEM_PROMPT_ZH : SYSTEM_PROMPT_EN;
 
     const schema: Schema = {
       type: Type.OBJECT,
@@ -88,7 +110,17 @@ async function handleGeminiRequest(request: Request, env: Env): Promise<Response
       required: ["dimensionCode", "environment", "log", "entropy", "stability"],
     };
 
-    const prompt = `
+    const prompt = language === 'zh'
+      ? `
+    生成一份观测报告。
+    持续时间：${duration} 分钟。
+    层级：${tier} (${tier === 200 ? "奇点" : tier === 120 ? "虚空" : tier === 1 ? "量子闪烁" : "标准"})。
+    用户语境（他们正在做的事）："${taskContext || "未知信号源"}"。
+
+    如果提供了语境，将其巧妙地融入环境描述中，作为一个物理对象或现象，但不要直接提及它是一个任务。
+    所有输出必须使用中文。
+    `
+      : `
     Generate an observation report.
     Duration: ${duration} minutes.
     Tier: ${tier} (${tier === 200 ? "Singularity" : tier === 120 ? "Imaginary" : tier === 1 ? "Quantum Flicker" : "Standard"}).
@@ -98,10 +130,10 @@ async function handleGeminiRequest(request: Request, env: Env): Promise<Response
     `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
-        systemInstruction: SYSTEM_PROMPT,
+        systemInstruction: systemPrompt,
         responseMimeType: "application/json",
         responseSchema: schema,
       },
