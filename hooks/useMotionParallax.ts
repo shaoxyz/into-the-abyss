@@ -1,8 +1,8 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState } from "react";
 
 export interface MotionOffset {
-  x: number;  // -1 to 1
-  y: number;  // -1 to 1
+  x: number; // -1 to 1
+  y: number; // -1 to 1
 }
 
 export interface UseMotionParallaxOptions {
@@ -19,7 +19,10 @@ export interface UseMotionParallaxReturn {
   isGyroscopePermissionGranted: boolean;
   requestGyroscopePermission: () => Promise<boolean>;
   /** Get current displacement for canvas-based components that can't use CSS variables */
-  getDisplacement: (depth: number, maxDisplacement: number) => { x: number; y: number };
+  getDisplacement: (
+    depth: number,
+    maxDisplacement: number,
+  ) => { x: number; y: number };
 }
 
 const DEFAULT_OPTIONS: Required<UseMotionParallaxOptions> = {
@@ -33,7 +36,7 @@ const DEFAULT_OPTIONS: Required<UseMotionParallaxOptions> = {
  * Updates CSS variables directly, bypassing React render cycle for 60fps animation
  */
 export function useMotionParallax(
-  options: UseMotionParallaxOptions = {}
+  options: UseMotionParallaxOptions = {},
 ): UseMotionParallaxReturn {
   const { followSpeed, centerAttraction, enabled } = {
     ...DEFAULT_OPTIONS,
@@ -41,17 +44,14 @@ export function useMotionParallax(
   };
 
   // Check if we're on a mobile device (has touch AND small screen)
-  const isMobile = typeof window !== 'undefined' &&
-    window.matchMedia('(max-width: 768px)').matches &&
-    ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-
-  // On mobile, disable parallax entirely
-  // On desktop, always use mouse (gyroscope API exists but doesn't work without hardware)
-  const effectivelyEnabled = enabled && !isMobile;
-  const useMouseInput = effectivelyEnabled && !isMobile;
+  const isMobile =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px)").matches &&
+    ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 
   const [isGyroscopeSupported, setIsGyroscopeSupported] = useState(false);
-  const [isGyroscopePermissionGranted, setIsGyroscopePermissionGranted] = useState(false);
+  const [isGyroscopePermissionGranted, setIsGyroscopePermissionGranted] =
+    useState(false);
 
   // Refs for animation loop (no React state = no re-renders)
   const targetOffset = useRef<MotionOffset>({ x: 0, y: 0 });
@@ -60,12 +60,12 @@ export function useMotionParallax(
 
   // Check gyroscope support
   useEffect(() => {
-    const hasGyroscope = 'DeviceOrientationEvent' in window;
+    const hasGyroscope = "DeviceOrientationEvent" in window;
     setIsGyroscopeSupported(hasGyroscope);
 
     if (
       hasGyroscope &&
-      typeof (DeviceOrientationEvent as any).requestPermission !== 'function'
+      typeof (DeviceOrientationEvent as any).requestPermission !== "function"
     ) {
       setIsGyroscopePermissionGranted(true);
     }
@@ -73,10 +73,14 @@ export function useMotionParallax(
 
   // Request gyroscope permission (iOS)
   const requestGyroscopePermission = useCallback(async (): Promise<boolean> => {
-    if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+    if (
+      typeof (DeviceOrientationEvent as any).requestPermission === "function"
+    ) {
       try {
-        const permission = await (DeviceOrientationEvent as any).requestPermission();
-        const granted = permission === 'granted';
+        const permission = await (
+          DeviceOrientationEvent as any
+        ).requestPermission();
+        const granted = permission === "granted";
         setIsGyroscopePermissionGranted(granted);
         return granted;
       } catch {
@@ -89,17 +93,28 @@ export function useMotionParallax(
   }, []);
 
   // Get displacement for canvas-based components (reads from current refs)
-  const getDisplacement = useCallback((depth: number = 1, maxDisplacement: number = 20) => {
-    const current = currentOffset.current;
-    return {
-      x: current.x * maxDisplacement * depth,
-      y: current.y * maxDisplacement * depth,
-    };
-  }, []);
+  const getDisplacement = useCallback(
+    (depth: number = 1, maxDisplacement: number = 20) => {
+      const current = currentOffset.current;
+      return {
+        x: current.x * maxDisplacement * depth,
+        y: current.y * maxDisplacement * depth,
+      };
+    },
+    [],
+  );
 
-  // Handle device orientation (gyroscope)
+  // Handle device orientation (gyroscope) - mobile only when permission granted
   useEffect(() => {
-    if (!effectivelyEnabled || !isGyroscopeSupported || !isGyroscopePermissionGranted) return;
+    if (
+      !enabled ||
+      !isMobile ||
+      !isGyroscopeSupported ||
+      !isGyroscopePermissionGranted
+    )
+      return;
+
+    console.log("Parallax: Gyroscope input enabled");
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       const { beta, gamma } = event;
@@ -112,15 +127,17 @@ export function useMotionParallax(
       targetOffset.current = { x, y };
     };
 
-    window.addEventListener('deviceorientation', handleOrientation);
-    return () => window.removeEventListener('deviceorientation', handleOrientation);
-  }, [effectivelyEnabled, isGyroscopeSupported, isGyroscopePermissionGranted]);
+    window.addEventListener("deviceorientation", handleOrientation);
+    return () =>
+      window.removeEventListener("deviceorientation", handleOrientation);
+  }, [enabled, isMobile, isGyroscopeSupported, isGyroscopePermissionGranted]);
 
   // Handle mouse movement (desktop only)
   useEffect(() => {
-    if (!useMouseInput) return;
+    // Only use mouse on desktop (not mobile)
+    if (!enabled || isMobile) return;
 
-    console.log('Parallax: Mouse input enabled');
+    console.log("Parallax: Mouse input enabled");
 
     const handleMouseMove = (event: MouseEvent) => {
       const { clientX, clientY } = event;
@@ -137,21 +154,26 @@ export function useMotionParallax(
       targetOffset.current = { x: 0, y: 0 };
     };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    document.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [useMouseInput]);
+  }, [enabled, isMobile]);
+
+  // Determine if animation should run:
+  // - Desktop: always when enabled
+  // - Mobile: only when gyroscope permission is granted
+  const shouldAnimate = enabled && (!isMobile || isGyroscopePermissionGranted);
 
   // GPU-accelerated animation loop using CSS Custom Properties
   useEffect(() => {
-    if (!effectivelyEnabled) {
+    if (!shouldAnimate) {
       // Reset CSS variables when disabled
-      document.documentElement.style.setProperty('--parallax-x', '0');
-      document.documentElement.style.setProperty('--parallax-y', '0');
+      document.documentElement.style.setProperty("--parallax-x", "0");
+      document.documentElement.style.setProperty("--parallax-y", "0");
       return;
     }
 
@@ -169,8 +191,14 @@ export function useMotionParallax(
 
       // Update CSS Custom Properties directly (no React re-render!)
       // This is GPU-accelerated and runs at 60fps
-      document.documentElement.style.setProperty('--parallax-x', current.x.toFixed(4));
-      document.documentElement.style.setProperty('--parallax-y', current.y.toFixed(4));
+      document.documentElement.style.setProperty(
+        "--parallax-x",
+        current.x.toFixed(4),
+      );
+      document.documentElement.style.setProperty(
+        "--parallax-y",
+        current.y.toFixed(4),
+      );
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };
@@ -180,7 +208,7 @@ export function useMotionParallax(
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [effectivelyEnabled, followSpeed, centerAttraction]);
+  }, [shouldAnimate, followSpeed, centerAttraction]);
 
   return {
     isGyroscopeSupported,
